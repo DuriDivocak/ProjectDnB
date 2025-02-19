@@ -1,8 +1,14 @@
 #include "PCM.hpp"
-#include <iostream>
+#include <Windows.h>
+#include <algorithm>
 
 namespace libprojectM {
 namespace Audio {
+
+template <typename T>
+T clamp(T value, T minVal, T maxVal) {
+    return std::max(minVal, std::min(value, maxVal));
+}
 
 template<
     int signalAmplitude,
@@ -47,6 +53,11 @@ void PCM::Add(int16_t const* const samples, uint32_t channels, size_t const coun
     AddToBuffer<32768, 0>(samples, channels, count);
 }
 
+// Used for figuring out if RMS has any effect
+void DebugPrint(const char* message) {
+    OutputDebugStringA(message);
+}
+
 void PCM::UpdateFrameAudioData(double secondsSinceLastFrame, uint32_t frame)
 {
     // 1. Copy audio data from input buffer
@@ -74,16 +85,23 @@ void PCM::UpdateFrameAudioData(double secondsSinceLastFrame, uint32_t frame)
     }
     RMS = sqrt(RMS / AudioBufferSamples);
 
-    // 6. Apply Low-Pass filter
-    static float filteredRMS = 0.0f;
-    constexpr float fc = 80.0f;         // Cutoff frequency for the filter
-    constexpr float fs = 44100.0f;      // Sampleing rate
-    constexpr float alpha = (2.0f * 3.141529 * fc) / (fs + (2.0f * 3.141529 * fc));
+    // 6. Normalize the values
+    static float RMS_MAX = 20.0f;
+    if (RMS > RMS_MAX)
+    {
+        RMS_MAX = RMS;
+    }
 
-    filteredRMS = alpha * RMS + (1.0f - alpha) * filteredRMS;
+    float normalizedRMS = RMS / RMS_MAX;
+    normalizedRMS = clamp(normalizedRMS, 0.0f, 1.0f); // Ensure within range
 
-    // 7. Save the filteredRMS value in m_volume variable.
-    m_volume = filteredRMS;
+    // 7. Save thevalue in m_volume variable.
+    m_volume = normalizedRMS;
+
+    // Debug RMS
+    char debugMsg[256];
+    sprintf(debugMsg, "DEBUG: RMS Volume = %f\n", m_volume);
+    OutputDebugStringA(debugMsg);
 
 }
 
@@ -106,6 +124,7 @@ auto PCM::GetFrameAudioData() const -> FrameAudioData
 
     // data.vol = (data.bass + data.mid + data.treb) * 0.333f;
     data.vol = m_volume;
+    // m_volume = 0.0f;
     data.volAtt = (data.bassAtt + data.midAtt + data.trebAtt) * 0.333f;
 
     return data;
