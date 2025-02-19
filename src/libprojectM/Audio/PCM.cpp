@@ -1,4 +1,5 @@
 #include "PCM.hpp"
+#include <iostream>
 
 namespace libprojectM {
 namespace Audio {
@@ -65,6 +66,25 @@ void PCM::UpdateFrameAudioData(double secondsSinceLastFrame, uint32_t frame)
     m_middles.Update(m_spectrumL, secondsSinceLastFrame, frame);
     m_treble.Update(m_spectrumL, secondsSinceLastFrame, frame);
 
+    // 5. Compute RMS
+    float RMS = 0.0f;
+    for (size_t i = 0; i < AudioBufferSamples; i++)
+    {
+        RMS += m_waveformL[i] * m_waveformL[i]; // Sum of squares
+    }
+    RMS = sqrt(RMS / AudioBufferSamples);
+
+    // 6. Apply Low-Pass filter
+    static float filteredRMS = 0.0f;
+    constexpr float fc = 80.0f;         // Cutoff frequency for the filter
+    constexpr float fs = 44100.0f;      // Sampleing rate
+    constexpr float alpha = (2.0f * 3.141529 * fc) / (fs + (2.0f * 3.141529 * fc));
+
+    filteredRMS = alpha * RMS + (1.0f - alpha) * filteredRMS;
+
+    // 7. Save the filteredRMS value in m_volume variable.
+    m_volume = filteredRMS;
+
 }
 
 auto PCM::GetFrameAudioData() const -> FrameAudioData
@@ -84,7 +104,8 @@ auto PCM::GetFrameAudioData() const -> FrameAudioData
     data.midAtt = m_middles.AverageRelative();
     data.trebAtt = m_treble.AverageRelative();
 
-    data.vol = (data.bass + data.mid + data.treb) * 0.333f;
+    // data.vol = (data.bass + data.mid + data.treb) * 0.333f;
+    data.vol = m_volume;
     data.volAtt = (data.bassAtt + data.midAtt + data.trebAtt) * 0.333f;
 
     return data;
