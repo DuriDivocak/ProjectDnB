@@ -27,7 +27,8 @@ public:
     {
         Bass = 0,    //!< Bass band (first sixth of the spectrum)
         Middles = 1, //!< Middles band (second sixth of the spectrum)
-        Treble = 2   //!< Treble band (third sixth of the spectrum)
+        Treble = 2,   //!< Treble band (third sixth of the spectrum)
+        Volume = 3   //!< Volume just so we can attenuate and normalize it like the rest
     };
 
     /**
@@ -35,6 +36,14 @@ public:
      * @param band The band to use for this loudness instance.
      */
     explicit Loudness(Band band);
+
+    /**
+     * @brief Computes RMS from waveform
+     * @param m_waveformL A raw waveform for RMS calculation
+     */
+    void ComputeRMS(const WaveformBuffer& m_waveformL);
+
+    void UpdateVolume(const WaveformBuffer& m_waveformL, double secondsSinceLastFrame, uint32_t frame);
 
     /**
      * @brief Updates the beat detection values and averages.
@@ -75,6 +84,8 @@ private:
      */
     void UpdateBandAverage(double secondsSinceLastFrame, uint32_t frame);
 
+    void UpdateVolumeAverage(double secondsSinceLastFrame, uint32_t frame);
+
     /**
      * @brief Adjusts the dampening rate according the the current FPS.
      * @param rate The rate to be dampened.
@@ -85,6 +96,7 @@ private:
 
     Band m_band{Band::Bass}; //!< The frequency band to use for this instance.
 
+    float m_RMS{};         //!< The result of RMS equation
     float m_current{};     //!< The current frame's sum of all frequency strengths in the current band.
     float m_average{};     //!< The short-term averaged value of m_current.
     float m_longAverage{}; //!< The long-term averaged value of m_current.

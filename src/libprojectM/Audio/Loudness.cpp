@@ -1,13 +1,39 @@
 #include "Loudness.hpp"
-
+#include <algorithm>
 #include <cmath>
 
 namespace libprojectM {
 namespace Audio {
 
+template <typename T>
+T clamp(T value, T minVal, T maxVal) {
+    return std::max(minVal, std::min(value, maxVal));
+}
+
 Loudness::Loudness(Loudness::Band band)
     : m_band(band)
 {
+}
+
+void Loudness::ComputeRMS(const WaveformBuffer& m_waveformL)
+{
+    float prevFilteredSample = 0.0f;
+    float alpha = 0.005;
+
+    // 5. Compute RMS
+    for (size_t i = 0; i < AudioBufferSamples; i++)
+    {
+        float filteredSample = alpha * m_waveformL[i] + (1 - alpha) + prevFilteredSample;   //applies a low pass filter to the sample.
+        prevFilteredSample = filteredSample;
+        m_RMS += filteredSample * filteredSample;
+    }
+    m_RMS = sqrt(m_RMS / AudioBufferSamples);
+}
+
+void Loudness::UpdateVolume(const WaveformBuffer& m_waveformL, double secondsSinceLastFrame, uint32_t frame)
+{
+    ComputeRMS(m_waveformL);
+    UpdateVolumeAverage(secondsSinceLastFrame, frame);
 }
 
 void Loudness::Update(const std::array<float, SpectrumSamples>& spectrumSamples, double secondsSinceLastFrame, uint32_t frame)
@@ -44,6 +70,18 @@ void Loudness::UpdateBandAverage(double secondsSinceLastFrame, uint32_t frame)
     m_average = m_average * rate + m_current * (1.0f - rate);
 
     rate = AdjustRateToFps(frame < 50 ? 0.9f : 0.992f, secondsSinceLastFrame);
+    m_longAverage = m_longAverage * rate + m_current * (1.0f - rate);
+
+    m_currentRelative = std::fabs(m_longAverage) < 0.001f ? 1.0f : m_current / m_longAverage;
+    m_averageRelative = std::fabs(m_longAverage) < 0.001f ? 1.0f : m_average / m_longAverage;
+}
+
+void Loudness::UpdateVolumeAverage(double secondsSinceLastFrame, uint32_t frame)
+{
+    float rate = AdjustRateToFps(m_current > m_average ? 0.3f : 0.6f, secondsSinceLastFrame);
+    m_average = m_average * rate + m_current * (1.0f - rate);
+
+    rate = AdjustRateToFps(frame < 50 ? 0.95f : 0.996f, secondsSinceLastFrame);
     m_longAverage = m_longAverage * rate + m_current * (1.0f - rate);
 
     m_currentRelative = std::fabs(m_longAverage) < 0.001f ? 1.0f : m_current / m_longAverage;

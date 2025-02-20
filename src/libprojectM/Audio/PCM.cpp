@@ -76,33 +76,7 @@ void PCM::UpdateFrameAudioData(double secondsSinceLastFrame, uint32_t frame)
     m_bass.Update(m_spectrumL, secondsSinceLastFrame, frame);
     m_middles.Update(m_spectrumL, secondsSinceLastFrame, frame);
     m_treble.Update(m_spectrumL, secondsSinceLastFrame, frame);
-
-    // 5. Compute RMS
-    float RMS = 0.0f;
-    for (size_t i = 0; i < AudioBufferSamples; i++)
-    {
-        RMS += m_waveformL[i] * m_waveformL[i]; // Sum of squares
-    }
-    RMS = sqrt(RMS / AudioBufferSamples);
-
-    // 6. Normalize the values
-    static float RMS_MAX = 20.0f;
-    if (RMS > RMS_MAX)
-    {
-        RMS_MAX = RMS;
-    }
-
-    float normalizedRMS = RMS / RMS_MAX;
-    normalizedRMS = clamp(normalizedRMS, 0.0f, 1.0f); // Ensure within range
-
-    // 7. Save thevalue in m_volume variable.
-    m_volume = normalizedRMS;
-
-    // Debug RMS
-    char debugMsg[256];
-    sprintf(debugMsg, "DEBUG: RMS Volume = %f\n", m_volume);
-    OutputDebugStringA(debugMsg);
-
+    m_volume.UpdateVolume(m_waveformL, secondsSinceLastFrame, frame);
 }
 
 auto PCM::GetFrameAudioData() const -> FrameAudioData
@@ -117,15 +91,19 @@ auto PCM::GetFrameAudioData() const -> FrameAudioData
     data.bass = m_bass.CurrentRelative();
     data.mid = m_middles.CurrentRelative();
     data.treb = m_treble.CurrentRelative();
+    data.vol = m_volume.CurrentRelative();
 
     data.bassAtt = m_bass.AverageRelative();
     data.midAtt = m_middles.AverageRelative();
     data.trebAtt = m_treble.AverageRelative();
+    data.volAtt = m_volume.AverageRelative();
+
+    char debugMsg[512];
+    sprintf(debugMsg, "DEBUG: data.vol = %f   data.treb = %f    data.mid = %f   data.bass = %f\n", data.vol, data.treb, data.mid, data.bass);
+    OutputDebugStringA(debugMsg);
 
     // data.vol = (data.bass + data.mid + data.treb) * 0.333f;
-    data.vol = m_volume;
-    // m_volume = 0.0f;
-    data.volAtt = (data.bassAtt + data.midAtt + data.trebAtt) * 0.333f;
+    // data.volAtt = (data.bassAtt + data.midAtt + data.trebAtt) * 0.333f;
 
     return data;
 }

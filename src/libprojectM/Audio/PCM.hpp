@@ -71,6 +71,7 @@ public:
      * @return A FrameAudioData class with waveform, spectrum and other derived values.
      */
     PROJECTM_EXPORT auto GetFrameAudioData() const -> FrameAudioData;
+    
 
 private:
     template<
@@ -112,7 +113,7 @@ private:
     Loudness m_bass{Loudness::Band::Bass};       //!< Beat detection/volume for the "bass" band.
     Loudness m_middles{Loudness::Band::Middles}; //!< Beat detection/volume for the "middles" band.
     Loudness m_treble{Loudness::Band::Treble};   //!< Beat detection/volume for the "treble" band.
-    mutable float m_volume = 0.0f;                           // Added this so I can pass a volume value to GetFrameAudioData
+    Loudness m_volume{Loudness::Band::Volume};   //!< Added this so I can pass a volume value to GetFrameAudioData
 };
 
 } // namespace Audio
