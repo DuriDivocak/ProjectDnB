@@ -83,23 +83,31 @@ auto PCM::GetFrameAudioData() const -> FrameAudioData
 {
     FrameAudioData data{};
 
-    std::copy(m_waveformL.begin(), m_waveformL.begin() + WaveformSamples, data.waveformLeft.begin());
-    std::copy(m_waveformR.begin(), m_waveformR.begin() + WaveformSamples, data.waveformRight.begin());
-    std::copy(m_spectrumL.begin(), m_spectrumL.begin() + SpectrumSamples, data.spectrumLeft.begin());
-    std::copy(m_spectrumR.begin(), m_spectrumR.begin() + SpectrumSamples, data.spectrumRight.begin());
+    // std::copy(m_waveformL.begin(), m_waveformL.begin() + WaveformSamples, data.waveformLeft.begin());
+    // std::copy(m_waveformR.begin(), m_waveformR.begin() + WaveformSamples, data.waveformRight.begin());
+    // std::copy(m_spectrumL.begin(), m_spectrumL.begin() + SpectrumSamples, data.spectrumLeft.begin());
+    // std::copy(m_spectrumR.begin(), m_spectrumR.begin() + SpectrumSamples, data.spectrumRight.begin());
 
-    data.bass = m_bass.CurrentRelative();
-    data.mid = m_middles.CurrentRelative();
-    data.treb = m_treble.CurrentRelative();
+    // data.bass = m_bass.CurrentRelative();
+    // data.mid = m_middles.CurrentRelative();
+    // data.treb = m_treble.CurrentRelative();
+
+    // data.bassAtt = m_bass.AverageRelative();
+    // data.midAtt = m_middles.AverageRelative();
+    // data.trebAtt = m_treble.AverageRelative();
+
+    data.bass = 1.0f;
+    data.mid = 1.0f;
+    data.treb = 1.0f;
+
+    data.bassAtt = 1.0f;
+    data.midAtt = 1.0f;
+    data.trebAtt = 1.0f;
+
     data.vol = m_volume.CurrentRelative();
-
-    data.bassAtt = m_bass.AverageRelative();
-    data.midAtt = m_middles.AverageRelative();
-    data.trebAtt = m_treble.AverageRelative();
     data.volAtt = m_volume.AverageRelative();
-
     char debugMsg[512];
-    sprintf(debugMsg, "DEBUG: data.vol = %f   data.treb = %f    data.mid = %f   data.bass = %f\n", data.vol, data.treb, data.mid, data.bass);
+    sprintf(debugMsg, "DEBUG: data.vol = %f   data.volAtt = %f    data.mid = %f   data.bass = %f\n", data.vol, data.volAtt, data.mid, data.bass);
     OutputDebugStringA(debugMsg);
 
     // data.vol = (data.bass + data.mid + data.treb) * 0.333f;

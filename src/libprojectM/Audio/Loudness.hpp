@@ -84,8 +84,6 @@ private:
      */
     void UpdateBandAverage(double secondsSinceLastFrame, uint32_t frame);
 
-    void UpdateVolumeAverage(double secondsSinceLastFrame, uint32_t frame);
-
     /**
      * @brief Adjusts the dampening rate according the the current FPS.
      * @param rate The rate to be dampened.
