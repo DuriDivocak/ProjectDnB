@@ -58,6 +58,30 @@ void DebugPrint(const char* message) {
     OutputDebugStringA(message);
 }
 
+void ScaleAndBassBoost(WaveformBuffer& waveformL, WaveformBuffer& waveformR, float volume, float bass)
+{
+    float scaleFactor = 1.0f + volume * 0.5f;  // Scale by loudness
+    float bassBoostFactor = 1.0f + bass * 0.7f;  // Boost low frequencies
+
+    for (size_t i = 0; i < WaveformSamples; i++)
+    {
+        float bassWeight = 1.0f - (static_cast<float>(i) / WaveformSamples); // Stronger bass impact at low frequencies
+        float boost = scaleFactor * (1.0f + bassBoostFactor * bassWeight);
+
+        waveformL[i] *= boost;
+        waveformR[i] *= boost;
+    }
+}
+
+void SmoothSpectrum(SpectrumBuffer& spectrumL, SpectrumBuffer& spectrumR)
+{
+     for (size_t i = 1; i < SpectrumSamples - 1; i++)
+    {
+        spectrumL[i] = (spectrumL[i - 1] + spectrumL[i] + spectrumL[i + 1]) / 3.0f;
+        spectrumR[i] = (spectrumR[i - 1] + spectrumR[i] + spectrumR[i + 1]) / 3.0f;
+    }
+}
+
 void PCM::UpdateFrameAudioData(double secondsSinceLastFrame, uint32_t frame)
 {
     // 1. Copy audio data from input buffer
@@ -77,35 +101,35 @@ void PCM::UpdateFrameAudioData(double secondsSinceLastFrame, uint32_t frame)
     m_middles.Update(m_spectrumL, secondsSinceLastFrame, frame);
     m_treble.Update(m_spectrumL, secondsSinceLastFrame, frame);
     m_volume.UpdateVolume(m_waveformL, secondsSinceLastFrame, frame);
+
+    float bass = m_bass.CurrentRelative();
+    float volume = m_volume.CurrentRelative();
+
+    ScaleAndBassBoost(m_waveformL, m_waveformR, volume, bass);
+    SmoothSpectrum(m_spectrumL, m_spectrumR);
 }
 
 auto PCM::GetFrameAudioData() const -> FrameAudioData
 {
     FrameAudioData data{};
 
-    // std::copy(m_waveformL.begin(), m_waveformL.begin() + WaveformSamples, data.waveformLeft.begin());
-    // std::copy(m_waveformR.begin(), m_waveformR.begin() + WaveformSamples, data.waveformRight.begin());
-    // std::copy(m_spectrumL.begin(), m_spectrumL.begin() + SpectrumSamples, data.spectrumLeft.begin());
-    // std::copy(m_spectrumR.begin(), m_spectrumR.begin() + SpectrumSamples, data.spectrumRight.begin());
+    std::copy(m_waveformL.begin(), m_waveformL.begin() + WaveformSamples, data.waveformLeft.begin());
+    std::copy(m_waveformR.begin(), m_waveformR.begin() + WaveformSamples, data.waveformRight.begin());
+    std::copy(m_spectrumL.begin(), m_spectrumL.begin() + SpectrumSamples, data.spectrumLeft.begin());
+    std::copy(m_spectrumR.begin(), m_spectrumR.begin() + SpectrumSamples, data.spectrumRight.begin());
+    
+    data.bass = m_bass.CurrentRelative();
+    data.mid = m_middles.CurrentRelative();
+    data.treb = m_treble.CurrentRelative();
 
-    // data.bass = m_bass.CurrentRelative();
-    // data.mid = m_middles.CurrentRelative();
-    // data.treb = m_treble.CurrentRelative();
-
-    // data.bassAtt = m_bass.AverageRelative();
-    // data.midAtt = m_middles.AverageRelative();
-    // data.trebAtt = m_treble.AverageRelative();
-
-    data.bass = 1.0f;
-    data.mid = 1.0f;
-    data.treb = 1.0f;
-
-    data.bassAtt = 1.0f;
-    data.midAtt = 1.0f;
-    data.trebAtt = 1.0f;
+    data.bassAtt = m_bass.AverageRelative();
+    data.midAtt = m_middles.AverageRelative();
+    data.trebAtt = m_treble.AverageRelative();
 
     data.vol = m_volume.CurrentRelative();
     data.volAtt = m_volume.AverageRelative();
+
+    
     char debugMsg[512];
     sprintf(debugMsg, "DEBUG: data.vol = %f   data.volAtt = %f    data.mid = %f   data.bass = %f\n", data.vol, data.volAtt, data.mid, data.bass);
     OutputDebugStringA(debugMsg);
@@ -143,7 +167,6 @@ void PCM::CopyNewWaveformData(const WaveformBuffer& source, WaveformBuffer& dest
         destination[i] = source[(bufferStartIndex + i) % AudioBufferSamples];
     }
 }
-
 
 } // namespace Audio
 } // namespace libprojectM
