@@ -96,7 +96,10 @@ private:
 
     void ComputeSF();
 
+    void ComputeSP();
+
     float m_spectralFlux = 0.0f;
+     float m_spectralPredictivity = 0.0f;
 
     // External input buffer
     WaveformBuffer m_inputBufferL{0.f}; //!< Circular buffer for left-channel PCM data.
@@ -112,6 +115,7 @@ private:
     SpectrumBuffer m_spectrumR{0.f}; //!< Right-channel spectrum data.
    
     SpectrumBuffer m_prevSpectrumL{}; //!< Left channel used for computing Spectral Flux 
+    SpectrumBuffer m_prevPrevSpectrumL{}; //!< Used for Spectral Predictivity
     // SpectrumBuffer m_prevSpectrumR{}; //!< Left channel used for computing Spectral Flux
 
     MilkdropFFT m_fft{WaveformSamples, SpectrumSamples, true}; //!< Spectrum analyzer instance.

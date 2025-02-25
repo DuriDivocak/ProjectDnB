@@ -95,6 +95,32 @@ void PCM::ComputeSF()
     m_prevSpectrumL = m_spectrumL;
 }
 
+void PCM::ComputeSP()
+{
+    float predictivity = 0.0f;
+
+    // Use only the **top end** (high frequencies) for predictivity calculation
+    size_t startIdx = SpectrumSamples * 2 / 3; // Start at 66% of the spectrum (~8kHz+)
+
+    for (size_t i = startIdx; i < SpectrumSamples - 1; i++)
+    {
+        // Predict the next frame using the last two frames
+        float predictedL = 2 * m_prevSpectrumL[i] - m_prevPrevSpectrumL[i];
+
+        // Compute squared error
+        float errorL = (m_spectrumL[i] - predictedL) * (m_spectrumL[i] - predictedL);
+
+        predictivity += errorL;
+    }
+
+    // Normalize & boost the value to make it more noticeable
+    m_spectralPredictivity = sqrt(predictivity) * 100.0f / (SpectrumSamples / 4);
+
+    // Shift stored spectra for next frame
+    m_prevPrevSpectrumL = m_prevSpectrumL;
+    m_prevSpectrumL = m_spectrumL;
+}
+
 void PCM::UpdateFrameAudioData(double secondsSinceLastFrame, uint32_t frame)
 {
     // 1. Copy audio data from input buffer
@@ -121,6 +147,7 @@ void PCM::UpdateFrameAudioData(double secondsSinceLastFrame, uint32_t frame)
     ScaleAndBassBoost(volume, bass);
     SmoothSpectrum();
     ComputeSF();
+    ComputeSP();
 }
 
 auto PCM::GetFrameAudioData() const -> FrameAudioData
@@ -134,7 +161,7 @@ auto PCM::GetFrameAudioData() const -> FrameAudioData
     
     data.bass = m_bass.CurrentRelative();
     data.mid = m_middles.CurrentRelative();
-    data.treb = m_treble.CurrentRelative();
+    data.treb = m_spectralPredictivity;
 
     data.bassAtt = m_bass.AverageRelative();
     data.midAtt = m_middles.AverageRelative();
@@ -145,7 +172,7 @@ auto PCM::GetFrameAudioData() const -> FrameAudioData
 
     
     char debugMsg[512];
-    sprintf(debugMsg, "DEBUG: data.vol = %f   data.volAtt = %f    m_specralFlux = %f   data.bass = %f\n", data.vol, data.volAtt, m_spectralFlux, data.bass);
+    sprintf(debugMsg, "DEBUG: SP = %f   data.volAtt = %f    m_specralFlux = %f   data.trebAtt = %f\n", data.treb, data.volAtt, m_spectralFlux, data.trebAtt);
     OutputDebugStringA(debugMsg);
 
     // data.vol = (data.bass + data.mid + data.treb) * 0.333f;
