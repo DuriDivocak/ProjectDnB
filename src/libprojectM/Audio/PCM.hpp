@@ -90,6 +90,14 @@ private:
      */
     void CopyNewWaveformData(const WaveformBuffer& source, WaveformBuffer& destination);
 
+    void ScaleAndBassBoost( float volume, float bass);
+
+    void SmoothSpectrum();
+
+    void ComputeSF();
+
+    float m_spectralFlux = 0.0f;
+
     // External input buffer
     WaveformBuffer m_inputBufferL{0.f}; //!< Circular buffer for left-channel PCM data.
     WaveformBuffer m_inputBufferR{0.f}; //!< Circular buffer for right-channel PCM data.
@@ -102,6 +110,9 @@ private:
     // Frame spectrum data
     SpectrumBuffer m_spectrumL{0.f}; //!< Left-channel spectrum data.
     SpectrumBuffer m_spectrumR{0.f}; //!< Right-channel spectrum data.
+   
+    SpectrumBuffer m_prevSpectrumL{}; //!< Left channel used for computing Spectral Flux 
+    // SpectrumBuffer m_prevSpectrumR{}; //!< Left channel used for computing Spectral Flux
 
     MilkdropFFT m_fft{WaveformSamples, SpectrumSamples, true}; //!< Spectrum analyzer instance.
 

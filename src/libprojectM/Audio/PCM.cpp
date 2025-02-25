@@ -58,7 +58,7 @@ void DebugPrint(const char* message) {
     OutputDebugStringA(message);
 }
 
-void ScaleAndBassBoost(WaveformBuffer& waveformL, WaveformBuffer& waveformR, float volume, float bass)
+void PCM::ScaleAndBassBoost(float volume, float bass)
 {
     float scaleFactor = 1.0f + volume * 0.5f;  // Scale by loudness
     float bassBoostFactor = 1.0f + bass * 0.7f;  // Boost low frequencies
@@ -68,18 +68,31 @@ void ScaleAndBassBoost(WaveformBuffer& waveformL, WaveformBuffer& waveformR, flo
         float bassWeight = 1.0f - (static_cast<float>(i) / WaveformSamples); // Stronger bass impact at low frequencies
         float boost = scaleFactor * (1.0f + bassBoostFactor * bassWeight);
 
-        waveformL[i] *= boost;
-        waveformR[i] *= boost;
+        m_waveformL[i] *= boost;
+        m_waveformR[i] *= boost;
     }
 }
 
-void SmoothSpectrum(SpectrumBuffer& spectrumL, SpectrumBuffer& spectrumR)
+void PCM::SmoothSpectrum()
 {
      for (size_t i = 1; i < SpectrumSamples - 1; i++)
     {
-        spectrumL[i] = (spectrumL[i - 1] + spectrumL[i] + spectrumL[i + 1]) / 3.0f;
-        spectrumR[i] = (spectrumR[i - 1] + spectrumR[i] + spectrumR[i + 1]) / 3.0f;
+        m_spectrumL[i] = (m_spectrumL[i - 1] + m_spectrumL[i] + m_spectrumL[i + 1]) / 3.0f;
+        m_spectrumR[i] = (m_spectrumR[i - 1] + m_spectrumR[i] + m_spectrumR[i + 1]) / 3.0f;
     }
+}
+
+void PCM::ComputeSF()
+{
+    float flux = 0.0f;
+    float diffL = 0.0f;
+    for (size_t i = 0; i < SpectrumSamples / 2 - 1; i++)
+    {
+        diffL = abs(m_spectrumL[i]) - abs(m_prevSpectrumL[i]);
+        flux += diffL * diffL;
+    }
+    m_spectralFlux = sqrt(flux) * 10.0 / (SpectrumSamples / 2);
+    m_prevSpectrumL = m_spectrumL;
 }
 
 void PCM::UpdateFrameAudioData(double secondsSinceLastFrame, uint32_t frame)
@@ -105,8 +118,9 @@ void PCM::UpdateFrameAudioData(double secondsSinceLastFrame, uint32_t frame)
     float bass = m_bass.CurrentRelative();
     float volume = m_volume.CurrentRelative();
 
-    ScaleAndBassBoost(m_waveformL, m_waveformR, volume, bass);
-    SmoothSpectrum(m_spectrumL, m_spectrumR);
+    ScaleAndBassBoost(volume, bass);
+    SmoothSpectrum();
+    ComputeSF();
 }
 
 auto PCM::GetFrameAudioData() const -> FrameAudioData
@@ -127,11 +141,11 @@ auto PCM::GetFrameAudioData() const -> FrameAudioData
     data.trebAtt = m_treble.AverageRelative();
 
     data.vol = m_volume.CurrentRelative();
-    data.volAtt = m_volume.AverageRelative();
+    data.volAtt = (m_volume.AverageRelative() * 0.7) + (m_spectralFlux * 0.3);
 
     
     char debugMsg[512];
-    sprintf(debugMsg, "DEBUG: data.vol = %f   data.volAtt = %f    data.mid = %f   data.bass = %f\n", data.vol, data.volAtt, data.mid, data.bass);
+    sprintf(debugMsg, "DEBUG: data.vol = %f   data.volAtt = %f    m_specralFlux = %f   data.bass = %f\n", data.vol, data.volAtt, m_spectralFlux, data.bass);
     OutputDebugStringA(debugMsg);
 
     // data.vol = (data.bass + data.mid + data.treb) * 0.333f;
