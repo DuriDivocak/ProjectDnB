@@ -60,6 +60,10 @@ public:
     PRJM_EVAL_F* bass_att{};
     PRJM_EVAL_F* mid_att{};
     PRJM_EVAL_F* treb_att{};
+    // My own values
+    PRJM_EVAL_F* spectralFlux{};
+    PRJM_EVAL_F* spectralPredictivity{};
+    // End of my values
     PRJM_EVAL_F* sample{};
     PRJM_EVAL_F* value1{};
     PRJM_EVAL_F* value2{};

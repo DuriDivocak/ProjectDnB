@@ -114,7 +114,7 @@ void PCM::ComputeSP()
     }
 
     // Normalize & boost the value to make it more noticeable
-    m_spectralPredictivity = sqrt(predictivity) * 100.0f / (SpectrumSamples / 4);
+    m_spectralPredictivity = sqrt(predictivity) * 10.0f / (SpectrumSamples / 4);
 
     // Shift stored spectra for next frame
     m_prevPrevSpectrumL = m_prevSpectrumL;
@@ -147,7 +147,7 @@ void PCM::UpdateFrameAudioData(double secondsSinceLastFrame, uint32_t frame)
     ScaleAndBassBoost(volume, bass);
     SmoothSpectrum();
     ComputeSF();
-    ComputeSP();
+    // ComputeSP();
 }
 
 auto PCM::GetFrameAudioData() const -> FrameAudioData
@@ -161,18 +161,21 @@ auto PCM::GetFrameAudioData() const -> FrameAudioData
     
     data.bass = m_bass.CurrentRelative();
     data.mid = m_middles.CurrentRelative();
-    data.treb = m_spectralPredictivity;
+    data.treb = m_treble.CurrentRelative();
 
     data.bassAtt = m_bass.AverageRelative();
     data.midAtt = m_middles.AverageRelative();
     data.trebAtt = m_treble.AverageRelative();
 
     data.vol = m_volume.CurrentRelative();
-    data.volAtt = (m_volume.AverageRelative() * 0.7) + (m_spectralFlux * 0.3);
+    data.volAtt = m_volume.AverageRelative();
+    data.spectralFlux = m_spectralFlux;
+    data.spectralPredictivity = m_spectralPredictivity;
+    // data.volAtt = m_volume.AverageRelative();
 
     
     char debugMsg[512];
-    sprintf(debugMsg, "DEBUG: SP = %f   data.volAtt = %f    m_specralFlux = %f   data.trebAtt = %f\n", data.treb, data.volAtt, m_spectralFlux, data.trebAtt);
+    sprintf(debugMsg, "data.vol = %f    data.bass = %f   data.mid = %f   data.treb = %f\n", data.vol, data.bass, data.mid, data.treb);
     OutputDebugStringA(debugMsg);
 
     // data.vol = (data.bass + data.mid + data.treb) * 0.333f;

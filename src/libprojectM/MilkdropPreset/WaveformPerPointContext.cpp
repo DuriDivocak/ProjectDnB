@@ -59,6 +59,10 @@ void WaveformPerPointContext::RegisterBuiltinVariables()
     REG_VAR(bass_att);
     REG_VAR(mid_att);
     REG_VAR(treb_att);
+
+    REG_VAR(spectralFlux);
+    REG_VAR(spectralPredictivity);
+
     REG_VAR(sample);
     REG_VAR(value1);
     REG_VAR(value2);

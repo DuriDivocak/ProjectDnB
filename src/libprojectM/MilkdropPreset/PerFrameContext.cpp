@@ -52,6 +52,10 @@ void PerFrameContext::RegisterBuiltinVariables()
     REG_VAR(bass_att);
     REG_VAR(mid_att);
     REG_VAR(treb_att);
+    //My won variables
+    REG_VAR(spectralFlux);
+    REG_VAR(spectralPredictivity);
+
     REG_VAR(frame);
     REG_VAR(decay);
     REG_VAR(wave_a);

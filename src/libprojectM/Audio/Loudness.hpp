@@ -29,6 +29,8 @@ public:
         Middles = 1, //!< Middles band (second sixth of the spectrum)
         Treble = 2,   //!< Treble band (third sixth of the spectrum)
         Volume = 3   //!< Volume just so we can attenuate and normalize it like the rest
+        // SF = 4,
+        // SP = 5
     };
 
     /**

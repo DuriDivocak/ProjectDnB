@@ -107,7 +107,11 @@ void CustomWaveform::Draw(const PerFrameContext& presetPerFrameContext)
                            ? m_presetState.audioData.spectrumRight.data()
                            : m_presetState.audioData.waveformRight.data();
 
-    const float mult = m_scaling * m_presetState.waveScale * (m_spectrum ? 0.15f : 0.004f);
+    float beatFactor = 1.0f + m_presetState.audioData.spectralFlux * 0.7f;
+    float chaosFactor = 1.0f + m_presetState.audioData.spectralPredictivity * 0.4f;
+
+    const float mult = m_scaling * m_presetState.waveScale * beatFactor * chaosFactor * (m_spectrum ? 0.15f : 0.004f);
+    // const float mult = m_scaling * m_presetState.waveScale * (m_spectrum ? 0.15f : 0.004f);
     //const float mult = m_scaling * m_presetState.waveScale * (m_spectrum ? 0.05f : 1.0f);
 
     // PCM data smoothing
@@ -154,8 +158,10 @@ void CustomWaveform::Draw(const PerFrameContext& presetPerFrameContext)
 
         m_perPointContext.ExecutePerPointCode();
 
-        pointsTransformed[sample].x = static_cast<float>((*m_perPointContext.x * 2.0 - 1.0) * m_presetState.renderContext.invAspectX);
-        pointsTransformed[sample].y = static_cast<float>((*m_perPointContext.y * -2.0 + 1.0) * m_presetState.renderContext.invAspectY);
+        float shakeFactor = 1.0f + sin(sample * 0.1f) * m_presetState.audioData.spectralPredictivity * 0.2f;
+
+        pointsTransformed[sample].x = static_cast<float>((*m_perPointContext.x * 2.0 - 1.0) * m_presetState.renderContext.invAspectX * shakeFactor);
+        pointsTransformed[sample].y = static_cast<float>((*m_perPointContext.y * -2.0 + 1.0) * m_presetState.renderContext.invAspectY * shakeFactor);
 
         pointsTransformed[sample].r = Renderer::color_modulo(*m_perPointContext.r);
         pointsTransformed[sample].g = Renderer::color_modulo(*m_perPointContext.g);
@@ -269,6 +275,9 @@ void CustomWaveform::LoadPerPointEvaluationVariables(float sample, float value1,
     *m_perPointContext.g = *m_perFrameContext.g;
     *m_perPointContext.b = *m_perFrameContext.b;
     *m_perPointContext.a = *m_perFrameContext.a;
+
+    *m_perPointContext.spectralFlux = static_cast<double>(m_presetState.audioData.spectralFlux);
+    *m_perPointContext.spectralPredictivity = static_cast<double>(m_presetState.audioData.spectralPredictivity);
 }
 
 int CustomWaveform::SmoothWave(const CustomWaveform::ColoredPoint* inputVertices,
