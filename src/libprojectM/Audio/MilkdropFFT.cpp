@@ -196,9 +196,22 @@ void MilkdropFFT::TimeToFrequencyDomain(const std::vector<float>& waveformData, 
 
     // 3. Take the magnitude & eventually equalize it (on a log10 scale) for output
     spectralData.resize(m_numFrequencies / 2);
+    // for (size_t i = 0; i < m_numFrequencies / 2; i++)
+    // {
+    //     spectralData[i] = m_equalize[i] * std::abs(spectrumData[i]);
+    // }
     for (size_t i = 0; i < m_numFrequencies / 2; i++)
     {
-        spectralData[i] = m_equalize[i] * std::abs(spectrumData[i]);
+        float frequency = (i * (m_sampleRate / 2)) / (m_numFrequencies / 2);  // Convert bin index to Hz
+
+        // 🚀 Logarithmic scaling formula
+        float logScale = log2(frequency / 20.0f) / log2(12000.0f / 20.0f);  
+        size_t logIndex = static_cast<size_t>(logScale * (m_numFrequencies / 2));
+
+        if (logIndex < spectralData.size())
+        {
+            spectralData[logIndex] += m_equalize[i] * std::abs(spectrumData[i]);
+        }
     }
 }
 

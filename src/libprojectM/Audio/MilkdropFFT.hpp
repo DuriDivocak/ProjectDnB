@@ -153,6 +153,7 @@ private:
     std::vector<float> m_envelope; //!< Equalizer envelope table.
     std::vector<float> m_equalize; //!< Equalization values.
     std::vector<std::complex<float>> m_cosSinTable; //!< Table with complex polar coordinates for the different frequency domains used in the FFT.
+    float m_sampleRate = 44100.0f;
 };
 
 } // namespace Audio
