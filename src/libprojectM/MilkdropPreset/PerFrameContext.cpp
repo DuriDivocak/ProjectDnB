@@ -54,7 +54,6 @@ void PerFrameContext::RegisterBuiltinVariables()
     REG_VAR(treb_att);
     //My won variables
     REG_VAR(spectralFlux);
-    REG_VAR(spectralPredictivity);
 
     REG_VAR(frame);
     REG_VAR(decay);
@@ -235,7 +234,6 @@ void PerFrameContext::LoadStateVariables(PresetState& state)
     *blur1_edge_darken = static_cast<PRJM_EVAL_F>(state.blur1EdgeDarken);
 
     *spectralFlux = static_cast<PRJM_EVAL_F>(state.audioData.spectralFlux);
-    *spectralPredictivity = static_cast<PRJM_EVAL_F>(state.audioData.spectralPredictivity);
 }
 
 void PerFrameContext::CompilePerFrameCode(const std::string& perFrameCode)

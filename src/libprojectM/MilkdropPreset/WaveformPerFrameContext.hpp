@@ -71,7 +71,6 @@ public:
     PRJM_EVAL_F* treb_att{};
     // My own values
     PRJM_EVAL_F* spectralFlux{};
-    PRJM_EVAL_F* spectralPredictivity{};
     // End of my values
     PRJM_EVAL_F* r{};
     PRJM_EVAL_F* g{};

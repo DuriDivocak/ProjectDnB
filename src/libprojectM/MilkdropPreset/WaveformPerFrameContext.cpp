@@ -61,7 +61,6 @@ void WaveformPerFrameContext::RegisterBuiltinVariables()
     REG_VAR(treb_att);
 
     REG_VAR(spectralFlux);
-    REG_VAR(spectralPredictivity);
 
     REG_VAR(r);
     REG_VAR(g);
@@ -84,7 +83,6 @@ void WaveformPerFrameContext::LoadStateVariables(PresetState& state, const PerFr
     *treb_att = static_cast<double>(state.audioData.trebAtt);
 
     *spectralFlux = static_cast<double>(state.audioData.spectralFlux);
-    *spectralPredictivity = static_cast<double>(state.audioData.spectralPredictivity);
 
     for (int q = 0; q < QVarCount; q++)
     {

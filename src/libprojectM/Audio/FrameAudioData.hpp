@@ -28,7 +28,6 @@ public:
     float volAtt{0.f};
 
     float spectralFlux{0.f};
-    float spectralPredictivity{0.f};
 
     std::array<float, WaveformSamples> waveformLeft;
     std::array<float, WaveformSamples> waveformRight;

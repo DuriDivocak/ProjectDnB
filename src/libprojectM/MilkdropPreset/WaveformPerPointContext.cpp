@@ -61,7 +61,6 @@ void WaveformPerPointContext::RegisterBuiltinVariables()
     REG_VAR(treb_att);
 
     REG_VAR(spectralFlux);
-    REG_VAR(spectralPredictivity);
 
     REG_VAR(sample);
     REG_VAR(value1);
@@ -88,7 +87,6 @@ void WaveformPerPointContext::LoadReadOnlyStateVariables(const PerFrameContext& 
     *treb_att = *presetPerFrameContext.treb_att;
 
     *spectralFlux = *presetPerFrameContext.spectralFlux;
-    *spectralPredictivity = *presetPerFrameContext.spectralPredictivity;
 }
 
 void WaveformPerPointContext::CompilePerPointCode(const std::string& perPointCode,

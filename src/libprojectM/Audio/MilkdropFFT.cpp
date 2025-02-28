@@ -204,7 +204,7 @@ void MilkdropFFT::TimeToFrequencyDomain(const std::vector<float>& waveformData, 
     {
         float frequency = (i * (m_sampleRate / 2)) / (m_numFrequencies / 2);  // Convert bin index to Hz
 
-        // 🚀 Logarithmic scaling formula
+        // Logarithmic scaling formula
         float logScale = log2(frequency / 20.0f) / log2(12000.0f / 20.0f);  
         size_t logIndex = static_cast<size_t>(logScale * (m_numFrequencies / 2));
 

@@ -54,7 +54,6 @@ void PerPixelContext::RegisterBuiltinVariables()
     REG_VAR(treb_att);
 
     REG_VAR(spectralFlux);
-    REG_VAR(spectralPredictivity);
     
     REG_VAR(frame);
     REG_VAR(x);
@@ -93,6 +92,8 @@ void PerPixelContext::LoadStateReadOnlyVariables(PresetState& state, PerFrameCon
     *pixelsy = static_cast<PRJM_EVAL_F>(state.renderContext.viewportSizeY);
     *aspectx = static_cast<PRJM_EVAL_F>(state.renderContext.aspectX);
     *aspecty = static_cast<PRJM_EVAL_F>(state.renderContext.aspectY);
+
+    *spectralFlux = static_cast<PRJM_EVAL_F>(*perFrameState.spectralFlux);
 }
 
 void PerPixelContext::LoadPerFrameQVariables(PresetState& state, PerFrameContext& perFrameState)

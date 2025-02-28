@@ -98,8 +98,12 @@ private:
 
     void ComputeSP();
 
+    void ApplyLPF();
+
+    void ApplyHPS();
+
     float m_spectralFlux = 0.0f;
-     float m_spectralPredictivity = 0.0f;
+    float m_spectralPredictivity = 0.0f;
 
     // External input buffer
     WaveformBuffer m_inputBufferL{0.f}; //!< Circular buffer for left-channel PCM data.
@@ -113,6 +117,7 @@ private:
     // Frame spectrum data
     SpectrumBuffer m_spectrumL{0.f}; //!< Left-channel spectrum data.
     SpectrumBuffer m_spectrumR{0.f}; //!< Right-channel spectrum data.
+    SpectrumBuffer m_harmonicSpectrum{0.f};
    
     SpectrumBuffer m_prevSpectrumL{}; //!< Left channel used for computing Spectral Flux 
     SpectrumBuffer m_prevPrevSpectrumL{}; //!< Used for Spectral Predictivity
