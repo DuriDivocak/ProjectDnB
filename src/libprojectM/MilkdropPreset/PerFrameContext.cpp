@@ -233,6 +233,9 @@ void PerFrameContext::LoadStateVariables(PresetState& state)
     *blur2_max = static_cast<PRJM_EVAL_F>(state.blur2Max);
     *blur3_max = static_cast<PRJM_EVAL_F>(state.blur3Max);
     *blur1_edge_darken = static_cast<PRJM_EVAL_F>(state.blur1EdgeDarken);
+
+    *spectralFlux = static_cast<PRJM_EVAL_F>(state.audioData.spectralFlux);
+    *spectralPredictivity = static_cast<PRJM_EVAL_F>(state.audioData.spectralPredictivity);
 }
 
 void PerFrameContext::CompilePerFrameCode(const std::string& perFrameCode)

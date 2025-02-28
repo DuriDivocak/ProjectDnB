@@ -103,6 +103,9 @@ void ShapePerFrameContext::LoadStateVariables(const PresetState& state,
     *mid_att = static_cast<double>(state.audioData.midAtt);
     *treb_att = static_cast<double>(state.audioData.trebAtt);
 
+    *spectralFlux = static_cast<double>(state.audioData.spectralFlux);
+    *spectralPredictivity = static_cast<double>(state.audioData.spectralPredictivity);
+
     for (int q = 0; q < QVarCount; q++)
     {
         *q_vars[q] = state.frameQVariables[q];

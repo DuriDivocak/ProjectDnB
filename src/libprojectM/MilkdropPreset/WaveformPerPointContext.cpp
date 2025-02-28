@@ -86,6 +86,9 @@ void WaveformPerPointContext::LoadReadOnlyStateVariables(const PerFrameContext& 
     *bass_att = *presetPerFrameContext.bass_att;
     *mid_att = *presetPerFrameContext.mid_att;
     *treb_att = *presetPerFrameContext.treb_att;
+
+    *spectralFlux = *presetPerFrameContext.spectralFlux;
+    *spectralPredictivity = *presetPerFrameContext.spectralPredictivity;
 }
 
 void WaveformPerPointContext::CompilePerPointCode(const std::string& perPointCode,
