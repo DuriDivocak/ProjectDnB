@@ -79,8 +79,8 @@ void PCM::SmoothSpectrum()
 {
      for (size_t i = 1; i < SpectrumSamples - 1; i++)
     {
-        m_spectrumL[i] = (m_spectrumL[i - 1] + m_spectrumL[i] + m_spectrumL[i + 1]) / 3.0f;
-        m_spectrumR[i] = (m_spectrumR[i - 1] + m_spectrumR[i] + m_spectrumR[i + 1]) / 3.0f;
+        m_spectrumL[i] = ((m_spectrumL[i - 1] + m_spectrumL[i] + m_spectrumL[i + 1]) / 3.0f) * ((SpectrumSamples - i) / 128);
+        m_spectrumR[i] = ((m_spectrumR[i - 1] + m_spectrumR[i] + m_spectrumR[i + 1]) / 3.0f) * ((SpectrumSamples - i) / 128);
     }
 }
 
@@ -118,48 +118,39 @@ void PCM::ApplyLPF()
 
 void PCM::ApplyHPS()
 {
-    constexpr int Lp = 5;
+    constexpr int Lp = 21;  // Median filter window size
+    constexpr int halfLp = Lp / 2;
 
-    for (size_t i = Lp / 2; i < SpectrumSamples - Lp / 2; i++)
+    for (size_t i = halfLp; i < SpectrumSamples - halfLp; i++)
     {
+        // Makeshift filter, dampends values that are outside of filter range
+        // if (i < minFreqIdx || i > maxFreqIdx)
+        // {
+        //     m_harmonicSpectrum[i] = m_spectrumL[i] * 0.1f;
+        //     continue;
+        // }
+
         std::array<float, Lp> neighborhood{};
-        
-        // Collect Lp neighboring values
         for (int j = 0; j < Lp; j++)
         {
-            neighborhood[j] = m_spectrumL[i + j - (Lp / 2)];
+            // int idx = std::clamp(static_cast<int>(i + j - halfLp), 0, static_cast<int>(SpectrumSamples - 1));
+            neighborhood[j] = m_spectrumL[i + j - halfLp];
         }
 
-        // Sort & get median value
-        std::nth_element(neighborhood.begin(), neighborhood.begin() + Lp / 2, neighborhood.end());
-        float medianValue = neighborhood[Lp / 2];
+        std::nth_element(neighborhood.begin(), neighborhood.begin() + halfLp, neighborhood.end());
 
-        // Create Harmonic Mask
-        if (m_spectrumL[i] >= medianValue)
+        if (m_spectrumL[i] >= neighborhood[halfLp])
         {
-            m_harmonicSpectrum[i] = m_spectrumL[i];  // Keep harmonic components
+            m_harmonicSpectrum[i] = m_spectrumL[i];
         }
         else
         {
-            m_harmonicSpectrum[i] = 0.0f;  // Remove percussive elements
+            m_harmonicSpectrum[i] = 0.0f;
         }
     }
 
-    //  Apply Band-Pass Filter (500-6000 Hz)
-    constexpr int minFreqIdx = static_cast<int>((500.0f / (22050.0f)) * SpectrumSamples);
-    constexpr int maxFreqIdx = static_cast<int>((6000.0f / (22050.0f)) * SpectrumSamples);
-
-    for (size_t i = 0; i < SpectrumSamples; i++)
-    {
-        if (i < minFreqIdx || i > maxFreqIdx)
-        {
-            m_harmonicSpectrum[i] = 0.0f;  // Zero out frequencies outside 500-6000 Hz
-        }
-    }
-
-    // Store in FrameAudioData
-    m_harmonicSpectrum = m_harmonicSpectrum;
 }
+
 
 void PCM::ComputeSP()
 {
@@ -199,7 +190,8 @@ void PCM::UpdateFrameAudioData(double secondsSinceLastFrame, uint32_t frame)
     UpdateSpectrum(m_waveformL, m_spectrumL);
     UpdateSpectrum(m_waveformR, m_spectrumR);
 
-    ApplyHPS();
+    SmoothSpectrum();
+    // ApplyHPS();
 
     // 3. Align waveforms
     m_alignL.Align(m_waveformL);
@@ -211,11 +203,10 @@ void PCM::UpdateFrameAudioData(double secondsSinceLastFrame, uint32_t frame)
     m_treble.Update(m_spectrumL, secondsSinceLastFrame, frame);
     m_volume.UpdateVolume(m_waveformL, secondsSinceLastFrame, frame);
 
-    // float bass = m_bass.CurrentRelative();
-    // float volume = m_volume.CurrentRelative();
+    float bass = m_bass.CurrentRelative();
+    float volume = m_volume.CurrentRelative();
 
-    // ScaleAndBassBoost(volume, bass);
-    // SmoothSpectrum();
+    ScaleAndBassBoost(volume, bass);
     ComputeSF();
     ComputeSP();
 }

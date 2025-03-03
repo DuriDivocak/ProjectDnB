@@ -111,7 +111,7 @@ void CustomWaveform::Draw(const PerFrameContext& presetPerFrameContext)
 
     const float mult = m_scaling * m_presetState.waveScale * beatFactor * (m_spectrum ? 0.15f : 0.004f);
     // const float mult = m_scaling * m_presetState.waveScale * (m_spectrum ? 0.15f : 0.004f);
-    //const float mult = m_scaling * m_presetState.waveScale * (m_spectrum ? 0.05f : 1.0f);
+    // const float mult = m_scaling * m_presetState.waveScale * (m_spectrum ? 0.05f : 1.0f);
 
     // PCM data smoothing
     const int offset1 = m_spectrum ? 0 : (maxSampleCount - sampleCount) / 2 - m_sep / 2;
