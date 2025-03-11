@@ -3,6 +3,8 @@
 #include "MilkdropStaticShaders.hpp"
 #include "PresetFileParser.hpp"
 
+// #include <Windows.h>
+
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <random>
@@ -36,6 +38,11 @@ PresetState::~PresetState()
 {
     projectm_eval_memory_buffer_destroy(globalMemory);
 }
+
+// void DebugPrint(const char* message) {
+//     OutputDebugStringA(message);
+// }
+
 
 void PresetState::Initialize(PresetFileParser& parsedFile)
 {
@@ -141,6 +148,15 @@ void PresetState::Initialize(PresetFileParser& parsedFile)
     perFrameInitCode = parsedFile.GetCode("per_frame_init_");
     perFrameCode = parsedFile.GetCode("per_frame_");
     perPixelCode = parsedFile.GetCode("per_pixel_");
+
+    // char debugMsg[5000];
+    // // sprintf(debugMsg, "data.vol = %f    data.bass = %f   data.mid = %f   data.treb = %f\n", data.vol, data.bass, data.mid, data.treb);
+    // sprintf(debugMsg, "%s", perFrameInitCode);
+    // OutputDebugStringA(debugMsg);
+    // sprintf(debugMsg, "%s", perFrameCode);
+    // OutputDebugStringA(debugMsg);
+    // sprintf(debugMsg, "%s", perPixelCode);
+    // OutputDebugStringA(debugMsg);
 
     // Custom waveform code:
     for (int i = 0; i < CustomWaveformCount; i++)

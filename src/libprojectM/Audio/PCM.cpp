@@ -79,8 +79,8 @@ void PCM::SmoothSpectrum()
 {
      for (size_t i = 1; i < SpectrumSamples - 1; i++)
     {
-        m_spectrumL[i] = ((m_spectrumL[i - 1] + m_spectrumL[i] + m_spectrumL[i + 1]) / 3.0f) * ((SpectrumSamples - i) / 128);
-        m_spectrumR[i] = ((m_spectrumR[i - 1] + m_spectrumR[i] + m_spectrumR[i + 1]) / 3.0f) * ((SpectrumSamples - i) / 128);
+        m_spectrumL[i] = ((m_spectrumL[i - 1] + m_spectrumL[i] + m_spectrumL[i + 1]) / 3.0f);
+        m_spectrumR[i] = ((m_spectrumR[i - 1] + m_spectrumR[i] + m_spectrumR[i + 1]) / 3.0f);
     }
 }
 
@@ -118,37 +118,41 @@ void PCM::ApplyLPF()
 
 void PCM::ApplyHPS()
 {
-    constexpr int Lp = 21;  // Median filter window size
+    constexpr int Lp = 50;  // Median filter window size
     constexpr int halfLp = Lp / 2;
+
+    constexpr int minFreqIdx = 200;
+    constexpr int maxFreqIdx = 450;
 
     for (size_t i = halfLp; i < SpectrumSamples - halfLp; i++)
     {
         // Makeshift filter, dampends values that are outside of filter range
-        // if (i < minFreqIdx || i > maxFreqIdx)
-        // {
-        //     m_harmonicSpectrum[i] = m_spectrumL[i] * 0.1f;
-        //     continue;
-        // }
+        if (i < minFreqIdx || i > maxFreqIdx)
+        {
+            m_harmonicSpectrum[i] = m_spectrumL[i] * 0.1f;
+            continue;
+        }
 
         std::array<float, Lp> neighborhood{};
         for (int j = 0; j < Lp; j++)
         {
-            // int idx = std::clamp(static_cast<int>(i + j - halfLp), 0, static_cast<int>(SpectrumSamples - 1));
-            neighborhood[j] = m_spectrumL[i + j - halfLp];
+            int idx = std::clamp(static_cast<int>(i + j - halfLp), 0, static_cast<int>(SpectrumSamples - 1));
+            neighborhood[j] = m_spectrumL[idx];
         }
 
         std::nth_element(neighborhood.begin(), neighborhood.begin() + halfLp, neighborhood.end());
 
+        float suppressionFactor = exp(-m_spectralFlux * 3.0f);
+
         if (m_spectrumL[i] >= neighborhood[halfLp])
         {
-            m_harmonicSpectrum[i] = m_spectrumL[i];
+            m_harmonicSpectrum[i] = m_spectrumL[i] * suppressionFactor;
         }
         else
         {
             m_harmonicSpectrum[i] = 0.0f;
         }
     }
-
 }
 
 
@@ -184,18 +188,10 @@ void PCM::UpdateFrameAudioData(double secondsSinceLastFrame, uint32_t frame)
     CopyNewWaveformData(m_inputBufferL, m_waveformL);
     CopyNewWaveformData(m_inputBufferR, m_waveformR);
 
-    ApplyLPF();
 
     // 2. Update spectrum analyzer data for both channels
     UpdateSpectrum(m_waveformL, m_spectrumL);
     UpdateSpectrum(m_waveformR, m_spectrumR);
-
-    SmoothSpectrum();
-    // ApplyHPS();
-
-    // 3. Align waveforms
-    m_alignL.Align(m_waveformL);
-    m_alignR.Align(m_waveformR);
 
     // 4. Update beat detection values
     m_bass.Update(m_spectrumL, secondsSinceLastFrame, frame);
@@ -207,8 +203,16 @@ void PCM::UpdateFrameAudioData(double secondsSinceLastFrame, uint32_t frame)
     float volume = m_volume.CurrentRelative();
 
     ScaleAndBassBoost(volume, bass);
+    ApplyLPF();
     ComputeSF();
     ComputeSP();
+    ApplyHPS();
+    SmoothSpectrum();
+
+    // 3. Align waveforms
+    m_alignL.Align(m_waveformL);
+    m_alignR.Align(m_waveformR);
+
 }
 
 auto PCM::GetFrameAudioData() const -> FrameAudioData
@@ -217,10 +221,10 @@ auto PCM::GetFrameAudioData() const -> FrameAudioData
 
     std::copy(m_waveformL.begin(), m_waveformL.begin() + WaveformSamples, data.waveformLeft.begin());
     std::copy(m_waveformR.begin(), m_waveformR.begin() + WaveformSamples, data.waveformRight.begin());
-    // std::copy(m_harmonicSpectrum.begin(), m_harmonicSpectrum.begin() + SpectrumSamples, data.spectrumLeft.begin());
-    // std::copy(m_harmonicSpectrum.begin(), m_harmonicSpectrum.begin() + SpectrumSamples, data.spectrumRight.begin());
-    std::copy(m_spectrumL.begin(), m_spectrumL.begin() + SpectrumSamples, data.spectrumLeft.begin());
-    std::copy(m_spectrumR.begin(), m_spectrumR.begin() + SpectrumSamples, data.spectrumRight.begin());
+    std::copy(m_harmonicSpectrum.begin(), m_harmonicSpectrum.begin() + SpectrumSamples, data.spectrumLeft.begin());
+    std::copy(m_harmonicSpectrum.begin(), m_harmonicSpectrum.begin() + SpectrumSamples, data.spectrumRight.begin());
+    // std::copy(m_spectrumL.begin(), m_spectrumL.begin() + SpectrumSamples, data.spectrumLeft.begin());
+    // std::copy(m_spectrumR.begin(), m_spectrumR.begin() + SpectrumSamples, data.spectrumRight.begin());
 
     data.bass = m_bass.CurrentRelative();
     data.mid = m_middles.CurrentRelative();
@@ -234,10 +238,10 @@ auto PCM::GetFrameAudioData() const -> FrameAudioData
     data.volAtt = m_volume.AverageRelative();
     data.spectralFlux = m_spectralFlux;
     
-    char debugMsg[512];
-    // sprintf(debugMsg, "data.vol = %f    data.bass = %f   data.mid = %f   data.treb = %f\n", data.vol, data.bass, data.mid, data.treb);
-    sprintf(debugMsg, "data.SF = %f    data.SP = %f\n", m_spectralFlux, m_spectralPredictivity);
-    OutputDebugStringA(debugMsg);
+    // char debugMsg[512];
+    // // sprintf(debugMsg, "data.vol = %f    data.bass = %f   data.mid = %f   data.treb = %f\n", data.vol, data.bass, data.mid, data.treb);
+    // sprintf(debugMsg, "data.SF = %f    data.SP = %f\n", m_spectralFlux, m_spectralPredictivity);
+    // OutputDebugStringA(debugMsg);
 
     // data.vol = (data.bass + data.mid + data.treb) * 0.333f;
     // data.volAtt = (data.bassAtt + data.midAtt + data.trebAtt) * 0.333f;
