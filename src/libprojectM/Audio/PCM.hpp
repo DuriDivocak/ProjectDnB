@@ -102,6 +102,10 @@ private:
 
     void ApplyHPS();
 
+    void ApplyTransientDetection();
+
+    void SmoothHarmonicSpectrum();
+
     float m_spectralFlux = 0.0f;
     float m_spectralPredictivity = 0.0f;
 

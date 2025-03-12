@@ -77,10 +77,18 @@ void PCM::ScaleAndBassBoost(float volume, float bass)
 
 void PCM::SmoothSpectrum()
 {
-     for (size_t i = 1; i < SpectrumSamples - 1; i++)
+    for (size_t i = 1; i < SpectrumSamples - 1; i++)
     {
         m_spectrumL[i] = ((m_spectrumL[i - 1] + m_spectrumL[i] + m_spectrumL[i + 1]) / 3.0f);
         m_spectrumR[i] = ((m_spectrumR[i - 1] + m_spectrumR[i] + m_spectrumR[i + 1]) / 3.0f);
+    }
+}
+
+void PCM::SmoothHarmonicSpectrum()
+{
+    for (size_t i = 1; i < SpectrumSamples - 1; i++)
+    {
+        m_harmonicSpectrum[i] = ((m_harmonicSpectrum[i - 1] + m_harmonicSpectrum[i] + m_harmonicSpectrum[i + 1]) / 3.0f);
     }
 }
 
@@ -134,25 +142,54 @@ void PCM::ApplyHPS()
         }
 
         std::array<float, Lp> neighborhood{};
+
         for (int j = 0; j < Lp; j++)
         {
             int idx = std::clamp(static_cast<int>(i + j - halfLp), 0, static_cast<int>(SpectrumSamples - 1));
             neighborhood[j] = m_spectrumL[idx];
         }
 
-        std::nth_element(neighborhood.begin(), neighborhood.begin() + halfLp, neighborhood.end());
+        float avgrSpecrtum = (m_spectrumL[i] + m_prevSpectrumL[i] + m_prevPrevSpectrumL[i]) / 3.0f;
 
-        float suppressionFactor = exp(-m_spectralFlux * 3.0f);
+        std::nth_element(neighborhood.begin(), neighborhood.begin() + halfLp, neighborhood.end());
 
         if (m_spectrumL[i] >= neighborhood[halfLp])
         {
-            m_harmonicSpectrum[i] = m_spectrumL[i] * suppressionFactor;
+            m_harmonicSpectrum[i] = (m_spectrumL[i] + m_prevSpectrumL[i] + m_prevPrevSpectrumL[i]) / 3 <= 0.5 ? pow(m_spectrumL[i], 2.0f) : m_spectrumL[i] /* * exp( - m_spectralFlux * 30.0f)*/;
         }
         else
         {
             m_harmonicSpectrum[i] = 0.0f;
         }
     }
+    m_prevPrevSpectrumL = m_prevSpectrumL;
+    m_prevSpectrumL = m_spectrumL;
+}
+
+void PCM::ApplyTransientDetection()
+{    
+    for (size_t i = 0; i < SpectrumSamples; i++)
+    {
+        // Rolling average to reduce sensitivity to transients
+        float smoothedValue = (m_spectrumL[i] + m_prevSpectrumL[i] + m_prevPrevSpectrumL[i]) / 3.0f;
+
+        float transient = m_spectrumL[i] - (m_prevSpectrumL[i] + m_prevPrevSpectrumL[i]);
+
+        // Define transient threshold (adjustable)
+        constexpr float transientThreshold = 0.75f;
+
+        // Check if it's a transient
+        if (transient < 0)
+        {
+            m_harmonicSpectrum[i] = m_spectrumL[i];  // Keep stable frequencies
+        }
+        else
+        {
+            m_harmonicSpectrum[i] = m_spectrumL[i] * 0.1f;  // Limit transient peaks
+        }
+    }
+    m_prevPrevSpectrumL = m_prevSpectrumL;
+    m_prevSpectrumL = m_spectrumL;
 }
 
 
@@ -206,8 +243,9 @@ void PCM::UpdateFrameAudioData(double secondsSinceLastFrame, uint32_t frame)
     ApplyLPF();
     ComputeSF();
     ComputeSP();
+    // ApplyTransientDetection();
     ApplyHPS();
-    SmoothSpectrum();
+    // SmoothHarmonicSpectrum();
 
     // 3. Align waveforms
     m_alignL.Align(m_waveformL);
@@ -240,7 +278,7 @@ auto PCM::GetFrameAudioData() const -> FrameAudioData
     
     // char debugMsg[512];
     // // sprintf(debugMsg, "data.vol = %f    data.bass = %f   data.mid = %f   data.treb = %f\n", data.vol, data.bass, data.mid, data.treb);
-    // sprintf(debugMsg, "data.SF = %f    data.SP = %f\n", m_spectralFlux, m_spectralPredictivity);
+    // sprintf(debugMsg, "data.SF = %f    data.SF2 = %f\n", exp( - m_spectralFlux * 30.0f), m_spectralFlux);
     // OutputDebugStringA(debugMsg);
 
     // data.vol = (data.bass + data.mid + data.treb) * 0.333f;
