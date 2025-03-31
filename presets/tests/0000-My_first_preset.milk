@@ -1,27 +1,94 @@
+MILKDROP_PRESET_VERSION=201
 PSVERSION=2
-PSVERSION_WARP=2
+PSVERSION_WARP=0
+PSVERSION_COMP=2
 [preset00]
 
-fDecay=0.98
-zoom=1.0
+fDecay=0.95
+zoom=0.75
 rot=0.0
-warp=0.0
+warp=1
 
 
+bWaveThick=0
+nWaveMode=6
+bWaveDots=1
+
+ob_size=0.001
+ob_a=1
+ob_r=0
+ob_g=1
+ob_b=0
+
+shapecode_0_enabled=1
+shapecode_0_sides=6
+shapecode_0_x=1
+shapecode_0_y=0.5
+shapecode_0_r=1.00000
+shapecode_0_g=1
+shapecode_0_b=1.00000
+shapecode_0_a=1.00000
+shapecode_0_border_r=1.000
+shapecode_0_border_g=1.000
+shapecode_0_border_b=1.000
+shapecode_0_border_a=0.500
+
+shapecode_1_enabled=1
+shapecode_1_sides=6
+shapecode_1_x=0.5
+shapecode_1_y=0
+shapecode_1_r=0.00000
+shapecode_1_g=1.00000
+shapecode_1_b=0.00000
+shapecode_1_a=1.0000
+shapecode_1_border_r=1.000
+shapecode_1_border_g=1.000
+shapecode_1_border_b=1.000
+shapecode_1_border_a=0.500
+
+shapecode_2_enabled=1
+shapecode_2_sides=6
+shapecode_2_x=0
+shapecode_2_y=0.5
+shapecode_2_r=1.00000
+shapecode_2_g=1.00000
+shapecode_2_b=1.00000
+shapecode_2_a=1.00000
+shapecode_2_border_r=1.000
+shapecode_2_border_g=1.000
+shapecode_2_border_b=1.000
+shapecode_2_border_a=0.500
+
+shapecode_3_enabled=1
+shapecode_3_sides=6
+shapecode_3_x=0.5
+shapecode_3_y=1
+shapecode_3_r=0.00000
+shapecode_3_g=1.00000
+shapecode_3_b=0.00000
+shapecode_3_a=1.0000
+shapecode_3_border_r=1.000
+shapecode_3_border_g=1.000
+shapecode_3_border_b=1.000
+shapecode_3_border_a=0.500
+
+wavecode_0_enabled=0
+wavecode_0_mode=3
+wavecode_0_bDrawThick=0
+wavecode_0_bAdditive=1
+wavecode_0_scaling=0.5
+wavecode_0_smoothing=0.500000
+wavecode_0_r=0.000000
+wavecode_0_g=1.000000
+wavecode_0_b=1.000000
+wavecode_0_a=1.000000
+wave_0_per_point41=x=x+value1/2
+wave_0_per_point42=y=y+value2/2;
 
 // Custom Shape Parameters
-per_frame_1= q1 = 0.5 + 0.2 * sin(time * 3); // Pulsating radius
-per_frame_2= q2 = 0.5; // Center X position
-per_frame_3= q3 = 0.5; // Center Y position
-per_frame_4= zoom = 1.0 * 0.2;
+per_frame_1=wave_a = bass * 2;
+per_frame_2=rot = rot + treb / 10.0;
+per_frame_3=zoom = zoom - vol^2;
+//per_frame_4= + 1;
 
-warp_1=`shader_body
-warp_2=`{
-warp_3=`    // sample a pixel from the previous frame.  
-warp_4=`    // uv coord is slightly warped (driven by the per-vertex equations),
-warp_5=`    //   and is what creates the main "movement" in our preset.
-warp_6=`    ret = tex2D( sampler_main, uv ).xyz;
-warp_7=`
-warp_8=`    // darken over time
-warp_9=`    ret *= 0.97;
-warp_10=`}
+

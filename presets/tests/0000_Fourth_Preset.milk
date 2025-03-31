@@ -1,0 +1,66 @@
+MILKDROP_PRESET_VERSION=201
+PSVERSION=4
+PSVERSION_WARP=2
+PSVERSION_COMP=4
+[preset00]
+
+// Global Settings
+fDecay=0.97
+zoom=1.0
+rot=0.0
+warp=0.0
+
+nWaveMode=7
+bAdditiveWaves=0
+bWaveDots=1
+bWaveThick=1
+bMaximizeWaveColor=1
+
+warp_1=`shader_body {
+warp_2=`
+warp_3=`    //uv = uv_orig;
+warp_4=`    float corr = texsize.xy*texsize_noise_lq.zw;
+warp_5=`    float2 uv1 = float2(uv.x-0.5,uv.y-0.5)*aspect.xy;
+warp_6=`
+warp_7=`    float2 tmp = uv1;
+warp_8=`    tmp.x = ang*3; tmp.y = rad;
+warp_9=`    uv1 = tmp;
+warp_10=`
+warp_11=`   float3 noise = (tex2D(sampler_noise_lq,corr*uv/2+q23)+1);
+warp_12=`
+warp_13=`   float3 ret1 = GetBlur1 (uv)-.3;
+warp_14=`   float3 crisp = tex2D(sampler_main, uv+ret1*.0001 ) + noise*0.1;
+warp_15=`   float3 blur = GetBlur1 (uv/4+.4*float2(.3*ret1.x,ret1.y)) - noise*.01;
+warp_16=`
+warp_17=`   ret = -.4*blur + crisp;
+warp_18=`    
+warp_19=`   ret *= 0.98 * pow(1-.01*q28*q28*rad,2); 
+warp_20=`   ret -= 0.04;
+warp_21=`}
+
+//comp_1=`shader_body
+//comp_2=`{
+//comp_3=`    float rad_lq = rad * length(texsize.xy)*0.5;
+//comp_4=`    float ang_lq = ang;
+//comp_5=`    float2 uv_temp1 = (uv - 0.5) * texsize.xy;
+//comp_6=`    float rad_hq = length(uv_temp1);
+//comp_7=`    float ang_hq = atan2(-uv_temp1.y, uv_temp1.x);
+//comp_8=`
+//comp_9=`    float2 uv2 = (uv - 0.5);
+//comp_10=`    float rad2 = rad_lq*0.75;
+//comp_11=`    float ang2 = ang_lq * M_INV_PI_2;
+//comp_12=`
+//comp_13=`        // ROTATION OVER TIME
+//comp_14=`        ang2 += time*0.025;   //rotate over time
+//comp_15=`
+//comp_16=`        // FIN TYPE
+//comp_17=`        float fins = 8;//3 + floor(rand_preset.z*5.95);
+//comp_18=`        ang2 = cos(ang2*M_PI_2*fins) * 0.023;
+//comp_19=`
+//comp_20=`
+//comp_21=`    ang2 *= M_PI_2;
+//comp_22=`    uv2 = 0.5 + rad2*float2(cos(ang2),sin(ang2))*texsize.zw;
+//comp_23=`
+//comp_24=`    ret = tex2D(sampler_main, uv2).xyz;
+//comp_25=`    ret *= 1.0; // a little bit of overbright
+//comp_26=`}

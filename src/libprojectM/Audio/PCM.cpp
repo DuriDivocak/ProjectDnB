@@ -240,7 +240,7 @@ void PCM::UpdateFrameAudioData(double secondsSinceLastFrame, uint32_t frame)
     float volume = m_volume.CurrentRelative();
 
     ScaleAndBassBoost(volume, bass);
-    ApplyLPF();
+    // ApplyLPF();
     ComputeSF();
     ComputeSP();
     // ApplyTransientDetection();
@@ -277,7 +277,7 @@ auto PCM::GetFrameAudioData() const -> FrameAudioData
     data.spectralFlux = m_spectralFlux;
     
     // char debugMsg[512];
-    // // sprintf(debugMsg, "data.vol = %f    data.bass = %f   data.mid = %f   data.treb = %f\n", data.vol, data.bass, data.mid, data.treb);
+    // sprintf(debugMsg, "data.vol = %f    data.bass = %f   data.mid = %f   data.treb = %f\n", data.vol, data.bass, data.mid, data.treb);
     // sprintf(debugMsg, "data.SF = %f    data.SF2 = %f\n", exp( - m_spectralFlux * 30.0f), m_spectralFlux);
     // OutputDebugStringA(debugMsg);
 

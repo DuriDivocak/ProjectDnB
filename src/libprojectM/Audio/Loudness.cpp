@@ -64,33 +64,8 @@ auto Loudness::AverageRelative() const -> float
 
 void Loudness::SumBand(const std::array<float, SpectrumSamples>& spectrumSamples)
 {
-    // int start = SpectrumSamples * static_cast<int>(m_band) / 6;
-    // int end = SpectrumSamples * (static_cast<int>(m_band) + 1) / 6;
-
-    int start = 0, end = 0;
-
-    switch(m_band)
-    {
-        case Band::Bass:
-            start = 1;
-            end = 23;
-            break;
-        
-        case Band::Middles:
-            start = 23;
-            end = 276;
-            break;
-        
-        case Band::Treble:
-            start = 276;
-            end = 551;
-            break;
-        
-        default:
-            start = 0;
-            end = SpectrumSamples;
-            break;
-    }
+    int start = SpectrumSamples * static_cast<int>(m_band) / 6;
+    int end = SpectrumSamples * (static_cast<int>(m_band) + 1) / 6;
 
     m_current = 0.0f;
     for (int sample = start; sample < end; sample++)
