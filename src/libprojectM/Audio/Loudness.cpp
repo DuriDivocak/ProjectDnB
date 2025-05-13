@@ -25,7 +25,6 @@ void Loudness::ComputeRMS(const WaveformBuffer& m_waveformL)
     float prevFilteredSample = 0.0f;
     float alpha = 0.001;
     m_RMS = 0.0f;
-    // 5. Compute RMS
     for (size_t i = 0; i < AudioBufferSamples; i++)
     {
         float filteredSample = alpha * m_waveformL[i] + (1 - alpha) * prevFilteredSample;   //applies a low pass filter to the sample.

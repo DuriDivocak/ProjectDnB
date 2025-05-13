@@ -90,21 +90,40 @@ private:
      */
     void CopyNewWaveformData(const WaveformBuffer& source, WaveformBuffer& destination);
 
+    /**
+     * @brief Ephesizes the bass in the waveform
+     */
     void ScaleAndBassBoost( float volume, float bass);
 
+    /**
+     * @brief Smooths out the sound spectrum
+     */
     void SmoothSpectrum();
+    
+    /**
+     * @brief Smoooths the harmonic spectrum
+     */
+    void SmoothHarmonicSpectrum();
 
+    /**
+     * @brief Calculates spectral flux
+     */
     void ComputeSF();
 
+    /**
+     * @brief Calculates spectral predictivity
+     */
     void ComputeSP();
 
+    /**
+     * @brief Filteres the waveform based on previous frames Spectral Predictivity value.
+     */
     void ApplyLPF();
 
+    /**
+     * @brief Harmonic Percusive Separation Algorithm.
+     */
     void ApplyHPS();
-
-    void ApplyTransientDetection();
-
-    void SmoothHarmonicSpectrum();
 
     float m_spectralFlux = 0.0f;
     float m_spectralPredictivity = 0.0f;

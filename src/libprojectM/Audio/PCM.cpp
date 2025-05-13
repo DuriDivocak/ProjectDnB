@@ -166,33 +166,6 @@ void PCM::ApplyHPS()
     m_prevSpectrumL = m_spectrumL;
 }
 
-void PCM::ApplyTransientDetection()
-{    
-    for (size_t i = 0; i < SpectrumSamples; i++)
-    {
-        // Rolling average to reduce sensitivity to transients
-        float smoothedValue = (m_spectrumL[i] + m_prevSpectrumL[i] + m_prevPrevSpectrumL[i]) / 3.0f;
-
-        float transient = m_spectrumL[i] - (m_prevSpectrumL[i] + m_prevPrevSpectrumL[i]);
-
-        // Define transient threshold (adjustable)
-        constexpr float transientThreshold = 0.75f;
-
-        // Check if it's a transient
-        if (transient < 0)
-        {
-            m_harmonicSpectrum[i] = m_spectrumL[i];  // Keep stable frequencies
-        }
-        else
-        {
-            m_harmonicSpectrum[i] = m_spectrumL[i] * 0.1f;  // Limit transient peaks
-        }
-    }
-    m_prevPrevSpectrumL = m_prevSpectrumL;
-    m_prevSpectrumL = m_spectrumL;
-}
-
-
 void PCM::ComputeSP()
 {
     float predictivity = 0.0f;
@@ -232,7 +205,8 @@ void PCM::UpdateFrameAudioData(double secondsSinceLastFrame, uint32_t frame)
 
     // 4. Update beat detection values
     m_bass.Update(m_spectrumL, secondsSinceLastFrame, frame);
-    m_middles.Update(m_spectrumL, secondsSinceLastFrame, frame);
+    // m_middles.Update(m_spectrumL, secondsSinceLastFrame, frame);
+    m_middles.Update(m_harmonicSpectrum, secondsSinceLastFrame, frame);
     m_treble.Update(m_spectrumL, secondsSinceLastFrame, frame);
     m_volume.UpdateVolume(m_waveformL, secondsSinceLastFrame, frame);
 
@@ -243,7 +217,6 @@ void PCM::UpdateFrameAudioData(double secondsSinceLastFrame, uint32_t frame)
     // ApplyLPF();
     ComputeSF();
     ComputeSP();
-    // ApplyTransientDetection();
     ApplyHPS();
     // SmoothHarmonicSpectrum();
 
